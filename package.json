@@ -1,0 +1,37 @@
+{
+  "name": "opera-drive-backend",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Opera Drive - Google Drive-style file storage and synchronization backend",
+  "main": "dist/index.js",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "migrate": "tsx src/db/migrate.ts",
+    "test": "vitest run"
+  },
+  "keywords": ["storage", "drive", "s3", "minio", "fastify", "postgresql"],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@fastify/cors": "^10.0.2",
+    "@fastify/jwt": "^9.0.4",
+    "@fastify/multipart": "^9.0.3",
+    "bcryptjs": "^3.0.2",
+    "dotenv": "^16.4.7",
+    "fastify": "^5.2.1",
+    "minio": "^8.0.4",
+    "pg": "^8.13.3",
+    "zod": "^3.24.2"
+  },
+  "devDependencies": {
+    "@types/bcryptjs": "^2.4.6",
+    "@types/node": "^22.13.9",
+    "@types/pg": "^8.11.11",
+    "pino-pretty": "^13.0.0",
+    "tsx": "^4.19.3",
+    "typescript": "^5.8.2",
+    "vitest": "^3.0.7"
+  }
+}
