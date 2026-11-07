@@ -21,26 +21,31 @@ export async function ensureBucketExists(
         console.log(`🪣 MinIO bucket '${bucketName}' ready.`);
     }
 }
+
 export async function uploadStream(
     bucket: string,
     key: string,
-    stream: Readable,
+    stream: Readable | Buffer,
     size?: number,
     mimeType: string = "application/octet-stream",
 ): Promise<Awaited<ReturnType<Minio.Client["putObject"]>>> {
-    return await minioClient.putObject(bucket, key, stream, size, {
+    const actualSize = Buffer.isBuffer(stream) ? stream.length : size;
+    return await minioClient.putObject(bucket, key, stream, actualSize, {
         "Content-Type": mimeType,
     });
 }
+
 export async function downloadStream(
     bucket: string,
     key: string,
 ): Promise<Readable> {
     return await minioClient.getObject(bucket, key);
 }
+
 export async function deleteObject(bucket: string, key: string): Promise<void> {
     await minioClient.removeObject(bucket, key);
 }
+
 export async function testMinioConnection(): Promise<boolean> {
     try {
         await minioClient.listBuckets();

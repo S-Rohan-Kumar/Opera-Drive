@@ -11,6 +11,7 @@ import { testDbConnection } from "./db/client.js";
 import { testMinioConnection } from "./storage/minio.js";
 import { authRoutes } from "./modules/auth/auth.routes.js";
 import { folderRoutes } from './modules/folders/folder.routes.js';
+import { fileRoutes } from './modules/files/file.routes.js';
 
 export async function buildServer(): Promise<FastifyInstance> {
     const app = fastify({
@@ -68,6 +69,7 @@ export async function buildServer(): Promise<FastifyInstance> {
 
     await app.register(authRoutes, { prefix: "/api/v1/auth" });
     await app.register(folderRoutes, { prefix: '/api/v1/folders' });
+    await app.register(fileRoutes, { prefix: '/api/v1/files' });
 
     app.get("/health", async (_req: FastifyRequest, reply: FastifyReply) => {
         const [dbOk, minioOk] = await Promise.all([
