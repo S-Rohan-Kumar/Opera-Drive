@@ -47,13 +47,18 @@ export class FileService {
         } else {
             const chunks: Buffer[] = [];
             for await (const chunk of fileStreamOrBuffer) {
-                chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
+                chunks.push(
+                    Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk),
+                );
             }
             buffer = Buffer.concat(chunks);
         }
 
         const sizeBytes = buffer.length;
-        const sha256Checksum = crypto.createHash("sha256").update(buffer).digest("hex");
+        const sha256Checksum = crypto
+            .createHash("sha256")
+            .update(buffer)
+            .digest("hex");
         const storageKey = `objects/${randomUUID()}`;
 
         try {
@@ -174,5 +179,111 @@ export class FileService {
             err.code = "FILE_NOT_FOUND";
             throw err;
         }
+    }
+    static async listVersions(userId: string, fileId: string) {
+        const fileRes = await query(
+            `SELECT id, current_version_id, name FROM files WHERE id = $1 AND owner_id = $2 AND deleted_at IS NULL`,
+            [fileId, userId],
+        );
+        if (fileRes.rows.length === 0) {
+            const err: any = new Error("File not found");
+            err.statusCode = 404;
+            err.code = "FILE_NOT_FOUND";
+            throw err;
+        }
+
+        const versionsRes = await query(
+            `SELECT id, version_number, size_bytes, mime_type, checksum_sha256, created_at,
+                    (id = $2) AS is_current
+             FROM file_versions 
+             WHERE file_id = $1 
+             ORDER BY version_number DESC`,
+            [fileId, fileRes.rows[0].current_version_id],
+        );
+
+        return {
+            file: fileRes.rows[0],
+            versions: versionsRes.rows,
+        };
+    }
+
+    static async getVersionDownloadStream(
+        userId: string,
+        fileId: string,
+        versionId: string,
+    ) {
+        const fileRes = await query(
+            `SELECT id, name FROM files WHERE id = $1 AND owner_id = $2 AND deleted_at IS NULL`,
+            [fileId, userId],
+        );
+        if (fileRes.rows.length === 0) {
+            const err: any = new Error("File not found");
+            err.statusCode = 404;
+            err.code = "FILE_NOT_FOUND";
+            throw err;
+        }
+
+        const vRes = await query(
+            `SELECT storage_key, mime_type, size_bytes FROM file_versions WHERE id = $1 AND file_id = $2`,
+            [versionId, fileId],
+        );
+        if (vRes.rows.length === 0) {
+            const err: any = new Error("Version not found");
+            err.statusCode = 404;
+            err.code = "VERSION_NOT_FOUND";
+            throw err;
+        }
+
+        const version = vRes.rows[0];
+        const stream = await downloadStream(
+            env.MINIO_BUCKET_NAME,
+            version.storage_key,
+        );
+
+        return {
+            stream,
+            filename: fileRes.rows[0].name,
+            mimeType: version.mime_type,
+            sizeBytes: version.size_bytes,
+        };
+    }
+
+    static async rollbackVersion(
+        userId: string,
+        fileId: string,
+        versionId: string,
+    ) {
+        const fileRes = await query(
+            `SELECT id, current_version_id FROM files WHERE id = $1 AND owner_id = $2 AND deleted_at IS NULL`,
+            [fileId, userId],
+        );
+        if (fileRes.rows.length === 0) {
+            const err: any = new Error("File not found");
+            err.statusCode = 404;
+            err.code = "FILE_NOT_FOUND";
+            throw err;
+        }
+
+        const vRes = await query(
+            `SELECT id, version_number, size_bytes, checksum_sha256 FROM file_versions WHERE id = $1 AND file_id = $2`,
+            [versionId, fileId],
+        );
+        if (vRes.rows.length === 0) {
+            const err: any = new Error("Version not found for this file");
+            err.statusCode = 404;
+            err.code = "VERSION_NOT_FOUND";
+            throw err;
+        }
+
+        await query(
+            `UPDATE files SET current_version_id = $1, updated_at = NOW() WHERE id = $2`,
+            [versionId, fileId],
+        );
+
+        return {
+            fileId,
+            currentVersionId: versionId,
+            versionNumber: vRes.rows[0].version_number,
+        };
     }
 }
