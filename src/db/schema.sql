@@ -78,3 +78,35 @@ CREATE TABLE IF NOT EXISTS permissions (
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     CONSTRAINT uq_permission UNIQUE(resource_type, resource_id, user_id)
 );
+
+-- 6. Upload Sessions Table (Resumable Uploads)
+CREATE TABLE IF NOT EXISTS upload_sessions (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    parent_id UUID NULL REFERENCES folders(id) ON DELETE SET NULL,
+    file_name VARCHAR(255) NOT NULL,
+    mime_type VARCHAR(100) NOT NULL,
+    expected_size_bytes BIGINT NOT NULL,
+    expected_sha256 CHAR(64) NOT NULL,
+    status VARCHAR(20) NOT NULL DEFAULT 'INITIATED' 
+        CHECK (status IN ('INITIATED', 'UPLOADING', 'COMPLETED', 'ABORTED', 'EXPIRED')),
+    expires_at TIMESTAMPTZ NOT NULL DEFAULT (NOW() + INTERVAL '24 hours'),
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- Index for session expiration cleanup queries
+CREATE INDEX IF NOT EXISTS idx_upload_sessions_expires_at 
+ON upload_sessions (status, expires_at);
+
+-- 7. Upload Parts Table (Track each chunk received)
+CREATE TABLE IF NOT EXISTS upload_parts (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    session_id UUID NOT NULL REFERENCES upload_sessions(id) ON DELETE CASCADE,
+    part_number INT NOT NULL,
+    storage_key VARCHAR(255) NOT NULL UNIQUE,
+    size_bytes BIGINT NOT NULL,
+    etag VARCHAR(100) NULL,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    CONSTRAINT uq_session_part UNIQUE(session_id, part_number)
+);

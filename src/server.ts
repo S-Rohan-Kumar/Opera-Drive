@@ -12,6 +12,7 @@ import { testMinioConnection } from "./storage/minio.js";
 import { authRoutes } from "./modules/auth/auth.routes.js";
 import { folderRoutes } from "./modules/folders/folder.routes.js";
 import { fileRoutes } from "./modules/files/file.routes.js";
+import { resumableRoutes } from "./modules/files/resumable.routes.js";
 
 export async function buildServer(): Promise<FastifyInstance> {
     const app = fastify({
@@ -59,7 +60,13 @@ export async function buildServer(): Promise<FastifyInstance> {
     await app.register(jwt, {
         secret: env.JWT_SECRET,
     });
-
+    app.addContentTypeParser(
+        "application/octet-stream",
+        { parseAs: "buffer" },
+        (_req, body, done) => {
+            done(null, body);
+        },
+    );
     await app.register(multipart, {
         limits: {
             fileSize: 100 * 1024 * 1024,
@@ -70,6 +77,7 @@ export async function buildServer(): Promise<FastifyInstance> {
     await app.register(authRoutes, { prefix: "/api/v1/auth" });
     await app.register(folderRoutes, { prefix: "/api/v1/folders" });
     await app.register(fileRoutes, { prefix: "/api/v1/files" });
+    await app.register(resumableRoutes, { prefix: "/api/v1/files/resumable" });
 
     app.get("/health", async (_req: FastifyRequest, reply: FastifyReply) => {
         const [dbOk, minioOk] = await Promise.all([
