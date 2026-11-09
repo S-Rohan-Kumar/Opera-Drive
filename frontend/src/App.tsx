@@ -35,6 +35,7 @@ const DriveWorkspace: React.FC = () => {
   const [createFolderOpen, setCreateFolderOpen] = useState(false);
   const [uploadFileOpen, setUploadFileOpen] = useState(false);
   const [storageRefreshTrigger, setStorageRefreshTrigger] = useState(0);
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
 
   const [shareModalState, setShareModalState] = useState<{
     isOpen: boolean;
@@ -194,9 +195,10 @@ const DriveWorkspace: React.FC = () => {
       <Navbar
         onOpenFolder={handleOpenFolderFromSearch}
         onOpenVersions={handleOpenVersions}
+        onToggleMobileSidebar={() => setMobileSidebarOpen((prev) => !prev)}
       />
 
-      <div className="flex flex-1 overflow-hidden">
+      <div className="flex flex-1 overflow-hidden relative">
         <Sidebar
           activeTab={activeTab}
           onSelectTab={(tab) => {
@@ -208,9 +210,11 @@ const DriveWorkspace: React.FC = () => {
           onOpenCreateFolder={() => setCreateFolderOpen(true)}
           onOpenUploadFile={() => setUploadFileOpen(true)}
           refreshStorageTrigger={storageRefreshTrigger}
+          isMobileOpen={mobileSidebarOpen}
+          onCloseMobile={() => setMobileSidebarOpen(false)}
         />
 
-        <main className="flex-1 overflow-y-auto p-8">
+        <main className="flex-1 overflow-y-auto p-4 sm:p-6 md:p-8">
           <div className="max-w-6xl mx-auto">
             {activeTab === 'my-drive' ? (
               <>

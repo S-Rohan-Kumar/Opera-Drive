@@ -149,30 +149,35 @@ export const TrashView: React.FC<TrashViewProps> = ({ onStorageChanged }) => {
         </button>
       </div>
 
-      <div className="bg-[#18181B] border border-[#27272A] rounded-2xl overflow-hidden shadow-xl">
+      <div className="bg-[#18181B] border border-[#27272A] rounded-2xl overflow-x-auto shadow-xl">
         <table className="w-full text-left text-sm text-[#A1A1AA]">
           <thead className="bg-[#121214] border-b border-[#27272A] text-xs font-semibold uppercase text-[#71717A]">
             <tr>
-              <th className="py-3 px-4">Name</th>
+              <th className="py-3 px-3 sm:px-4">Name</th>
               <th className="py-3 px-4 hidden sm:table-cell">Deleted At</th>
               <th className="py-3 px-4 hidden sm:table-cell">Size</th>
-              <th className="py-3 px-4 text-right">Actions</th>
+              <th className="py-3 px-3 sm:px-4 text-right">Actions</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-[#27272A]/60">
             {folders.map((folder) => (
               <tr key={folder.id} className="hover:bg-[#202024]/80 transition group">
-                <td className="py-3 px-4 flex items-center gap-3">
+                <td className="py-3 px-3 sm:px-4 flex items-center gap-2.5 sm:gap-3 min-w-0">
                   <div className="shrink-0 p-2 rounded-xl bg-[#0B0B0C] text-[#C6F432] border border-[#27272A]">
                     <Folder className="w-4 h-4 fill-current" />
                   </div>
-                  <span className="font-semibold text-white truncate max-w-xs">{folder.name}</span>
+                  <div className="flex flex-col min-w-0">
+                    <span className="font-semibold text-white truncate max-w-[130px] sm:max-w-xs">{folder.name}</span>
+                    <span className="sm:hidden text-[10px] text-[#71717A] mt-0.5">
+                      Deleted {new Date(folder.deleted_at).toLocaleDateString()}
+                    </span>
+                  </div>
                 </td>
                 <td className="py-3 px-4 hidden sm:table-cell text-xs text-[#71717A]">
                   {new Date(folder.deleted_at).toLocaleDateString()}
                 </td>
                 <td className="py-3 px-4 hidden sm:table-cell text-xs font-mono">—</td>
-                <td className="py-3 px-4 text-right">
+                <td className="py-3 px-3 sm:px-4 text-right">
                   <div className="flex items-center justify-end gap-1">
                     <button
                       onClick={() => handleRestore('folder', folder.id)}
@@ -197,11 +202,18 @@ export const TrashView: React.FC<TrashViewProps> = ({ onStorageChanged }) => {
 
             {files.map((file) => (
               <tr key={file.id} className="hover:bg-[#202024]/80 transition group">
-                <td className="py-3 px-4 flex items-center gap-3">
+                <td className="py-3 px-3 sm:px-4 flex items-center gap-2.5 sm:gap-3 min-w-0">
                   <div className="shrink-0 p-2 rounded-xl bg-[#0B0B0C] border border-[#27272A]">
                     {getFileIcon(file.mime_type)}
                   </div>
-                  <span className="font-semibold text-white truncate max-w-xs">{file.name}</span>
+                  <div className="flex flex-col min-w-0">
+                    <span className="font-semibold text-white truncate max-w-[130px] sm:max-w-xs">{file.name}</span>
+                    <span className="sm:hidden text-[10px] text-[#71717A] mt-0.5 flex items-center gap-1.5">
+                      <span>{formatBytes(file.size_bytes)}</span>
+                      <span>•</span>
+                      <span>{new Date(file.deleted_at).toLocaleDateString()}</span>
+                    </span>
+                  </div>
                 </td>
                 <td className="py-3 px-4 hidden sm:table-cell text-xs text-[#71717A]">
                   {new Date(file.deleted_at).toLocaleDateString()}
@@ -209,7 +221,7 @@ export const TrashView: React.FC<TrashViewProps> = ({ onStorageChanged }) => {
                 <td className="py-3 px-4 hidden sm:table-cell text-xs font-mono">
                   {formatBytes(file.size_bytes)}
                 </td>
-                <td className="py-3 px-4 text-right">
+                <td className="py-3 px-3 sm:px-4 text-right">
                   <div className="flex items-center justify-end gap-1">
                     <button
                       onClick={() => handleRestore('file', file.id)}

@@ -44,27 +44,34 @@ export const FileList: React.FC<FileListProps> = ({
           {files.length}
         </span>
       </h2>
-      <div className="bg-[#18181B] border border-[#27272A] rounded-2xl overflow-hidden shadow-xl shadow-black/40">
+      <div className="bg-[#18181B] border border-[#27272A] rounded-2xl overflow-x-auto shadow-xl shadow-black/40">
         <table className="w-full text-left text-sm text-[#A1A1AA]">
           <thead className="bg-[#121214] border-b border-[#27272A] text-xs font-semibold uppercase text-[#71717A]">
             <tr>
-              <th className="py-3 px-4">Name</th>
+              <th className="py-3 px-3 sm:px-4">Name</th>
               <th className="py-3 px-4 hidden sm:table-cell">Version</th>
               <th className="py-3 px-4 hidden sm:table-cell">Size</th>
               <th className="py-3 px-4 hidden md:table-cell">Last Modified</th>
-              <th className="py-3 px-4 text-right">Actions</th>
+              <th className="py-3 px-3 sm:px-4 text-right">Actions</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-[#27272A]/60">
             {files.map((file) => (
               <tr key={file.id} className="hover:bg-[#202024]/80 transition group">
-                <td className="py-3 px-4 flex items-center gap-3">
+                <td className="py-3 px-3 sm:px-4 flex items-center gap-2.5 sm:gap-3 min-w-0">
                   <div className="shrink-0 p-2 rounded-xl bg-[#0B0B0C] border border-[#27272A]">
                     {getFileIcon(file.mime_type)}
                   </div>
-                  <span className="font-semibold text-white truncate max-w-xs md:max-w-md group-hover:text-[#C6F432] transition">
-                    {file.name}
-                  </span>
+                  <div className="flex flex-col min-w-0">
+                    <span className="font-semibold text-white truncate max-w-[130px] sm:max-w-xs md:max-w-md group-hover:text-[#C6F432] transition">
+                      {file.name}
+                    </span>
+                    <span className="sm:hidden text-[10px] text-[#71717A] flex items-center gap-1.5 mt-0.5">
+                      <span className="text-[#C6F432] font-semibold">v{file.version_number ?? 1}</span>
+                      <span>•</span>
+                      <span>{formatBytes(file.size_bytes)}</span>
+                    </span>
+                  </div>
                 </td>
                 <td className="py-3 px-4 hidden sm:table-cell">
                   <button
