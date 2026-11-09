@@ -43,7 +43,8 @@ export const SyncProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     function connect() {
       const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-      const wsUrl = `${protocol}//${window.location.hostname}:4000/api/v1/sync/ws?token=${encodeURIComponent(token!)}`;
+      const host = window.location.host; // includes port in dev (e.g. localhost:5173) or clean domain in prod
+      const wsUrl = `${protocol}//${host}/api/v1/sync/ws?token=${encodeURIComponent(token!)}`;
 
       const ws = new WebSocket(wsUrl);
       socketRef.current = ws;

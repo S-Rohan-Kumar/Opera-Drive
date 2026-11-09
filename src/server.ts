@@ -8,6 +8,10 @@ import jwt from "@fastify/jwt";
 import multipart from "@fastify/multipart";
 import websocket from '@fastify/websocket';
 import rateLimit from "@fastify/rate-limit";
+import fastifyStatic from "@fastify/static";
+import fs from "fs";
+import path from "path";
+import { fileURLToPath } from "url";
 import { redisClient } from "./queue/redis.js";
 import { env } from "./config/env.js";
 import { testDbConnection } from "./db/client.js";
@@ -131,6 +135,28 @@ export async function buildServer(): Promise<FastifyInstance> {
             timestamp: new Date().toISOString(),
         });
     });
+
+    const __filename = fileURLToPath(import.meta.url);
+    const __dirname = path.dirname(__filename);
+    const frontendDist = path.resolve(__dirname, '../frontend-dist');
+
+    if (fs.existsSync(frontendDist)) {
+        await app.register(fastifyStatic, {
+            root: frontendDist,
+            prefix: '/',
+        });
+
+        app.setNotFoundHandler((req, reply) => {
+            if (!req.raw.url?.startsWith('/api/')) {
+                reply.sendFile('index.html');
+            } else {
+                reply.status(404).send({
+                    success: false,
+                    error: { code: 'NOT_FOUND', message: 'Route not found' },
+                });
+            }
+        });
+    }
 
     return app;
 }
