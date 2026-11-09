@@ -122,13 +122,17 @@ export const UploadFileModal: React.FC<UploadFileModalProps> = ({
           )
         );
       } catch (err: any) {
+        const errorMsg =
+          err.code === 'STORAGE_QUOTA_EXCEEDED'
+            ? 'Storage quota exceeded (5 GB limit reached). Please free up space or empty Trash.'
+            : (err.message || 'Upload failed');
         setQueue((prev) =>
           prev.map((q, idx) =>
             idx === i
               ? {
                   ...q,
                   status: 'error',
-                  error: err.message || 'Upload failed',
+                  error: errorMsg,
                 }
               : q
           )

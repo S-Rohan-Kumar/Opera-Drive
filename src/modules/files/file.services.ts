@@ -8,6 +8,7 @@ import {
 } from "../../storage/minio.js";
 import { env } from "../../config/env.js";
 import { PermissionService } from "../permissions/permission.service.js";
+import { QuotaService } from "../users/quota.service.js";
 
 export interface FileRecord {
     id: string;
@@ -70,6 +71,7 @@ export class FileService {
         }
 
         const sizeBytes = buffer.length;
+        await QuotaService.checkQuota(containerOwnerId, sizeBytes);
         const sha256Checksum = crypto
             .createHash("sha256")
             .update(buffer)

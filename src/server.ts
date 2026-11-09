@@ -7,6 +7,8 @@ import cors from "@fastify/cors";
 import jwt from "@fastify/jwt";
 import multipart from "@fastify/multipart";
 import websocket from '@fastify/websocket';
+import rateLimit from "@fastify/rate-limit";
+import { redisClient } from "./queue/redis.js";
 import { env } from "./config/env.js";
 import { testDbConnection } from "./db/client.js";
 import { testMinioConnection } from "./storage/minio.js";
@@ -63,6 +65,11 @@ export async function buildServer(): Promise<FastifyInstance> {
         credentials: true,
     });
 
+    await app.register(rateLimit, {
+        max: env.NODE_ENV === "test" ? 1000 : 300,
+        timeWindow: "1 minute",
+    });
+
     await app.register(websocket);
 
     await app.register(jwt, {
@@ -97,13 +104,29 @@ export async function buildServer(): Promise<FastifyInstance> {
             testMinioConnection(),
         ]);
 
-        const isHealthy = dbOk && minioOk;
+        let redisOk = false;
+        try {
+            const pong = await redisClient.ping();
+            redisOk = pong === "PONG";
+        } catch {
+            redisOk = false;
+        }
+
+        const isHealthy = dbOk && minioOk && redisOk;
 
         return reply.status(isHealthy ? 200 : 503).send({
             status: isHealthy ? "healthy" : "degraded",
             services: {
                 database: dbOk ? "up" : "down",
                 storage: minioOk ? "up" : "down",
+                redis: redisOk ? "up" : "down",
+            },
+            system: {
+                uptimeSeconds: Math.floor(process.uptime()),
+                memoryUsageMb: {
+                    rss: (process.memoryUsage().rss / 1024 / 1024).toFixed(2),
+                    heapUsed: (process.memoryUsage().heapUsed / 1024 / 1024).toFixed(2),
+                },
             },
             timestamp: new Date().toISOString(),
         });

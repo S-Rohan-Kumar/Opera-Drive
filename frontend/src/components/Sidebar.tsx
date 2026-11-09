@@ -1,5 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { HardDrive, Plus, FolderPlus, Upload, Users, Cloud, Trash2 } from 'lucide-react';
+import { getStorageUsage, type StorageUsageData } from '../api/client.js';
+import { useSync } from '../context/SyncContext.js';
 
 export type SidebarTab = 'my-drive' | 'shared-with-me' | 'trash';
 
@@ -8,6 +10,15 @@ interface SidebarProps {
   onSelectTab: (tab: SidebarTab) => void;
   onOpenCreateFolder: () => void;
   onOpenUploadFile: () => void;
+  refreshStorageTrigger?: number;
+}
+
+function formatBytes(bytes: number): string {
+  if (bytes === 0) return '0 B';
+  const k = 1024;
+  const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return `${parseFloat((bytes / Math.pow(k, i)).toFixed(1))} ${sizes[i]}`;
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({
@@ -15,9 +26,31 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onSelectTab,
   onOpenCreateFolder,
   onOpenUploadFile,
+  refreshStorageTrigger,
 }) => {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const [storage, setStorage] = useState<StorageUsageData | null>(null);
+  const { lastEvent } = useSync();
+
+  const fetchStorage = async () => {
+    try {
+      const data = await getStorageUsage();
+      setStorage(data);
+    } catch {
+      // Ignore background refresh errors
+    }
+  };
+
+  useEffect(() => {
+    fetchStorage();
+  }, [refreshStorageTrigger]);
+
+  useEffect(() => {
+    if (lastEvent) {
+      fetchStorage();
+    }
+  }, [lastEvent]);
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -108,14 +141,30 @@ export const Sidebar: React.FC<SidebarProps> = ({
       </div>
 
       <div className="p-4 rounded-xl bg-[#18181B] border border-[#27272A]">
-        <div className="flex items-center gap-2 text-white text-xs font-semibold mb-2">
-          <Cloud className="w-4 h-4 text-[#C6F432]" />
-          <span>Local Storage</span>
+        <div className="flex items-center justify-between text-white text-xs font-semibold mb-2">
+          <div className="flex items-center gap-2">
+            <Cloud className="w-4 h-4 text-[#C6F432]" />
+            <span>Storage Quota</span>
+          </div>
+          <span className="text-[11px] font-mono text-[#A1A1AA]">
+            {storage ? `${storage.usagePercentage}%` : '...'}
+          </span>
         </div>
         <div className="w-full bg-[#27272A] rounded-full h-1.5 mb-2 overflow-hidden">
-          <div className="bg-[#C6F432] h-1.5 rounded-full w-1/4 shadow-sm shadow-[#C6F432]/50" />
+          <div
+            className={`h-1.5 rounded-full transition-all duration-500 shadow-sm ${
+              (storage?.usagePercentage ?? 0) > 90
+                ? 'bg-rose-500 shadow-rose-500/50'
+                : 'bg-[#C6F432] shadow-[#C6F432]/50'
+            }`}
+            style={{ width: `${Math.min(100, Math.max(storage?.usedBytes ? 2 : 0, storage?.usagePercentage ?? 0))}%` }}
+          />
         </div>
-        <p className="text-[11px] text-[#A1A1AA]">MinIO Blob Storage (S3 API)</p>
+        <p className="text-[11px] text-[#A1A1AA] font-medium">
+          {storage
+            ? `${formatBytes(storage.usedBytes)} of ${formatBytes(storage.quotaBytes)} used`
+            : 'Loading quota...'}
+        </p>
       </div>
     </aside>
   );

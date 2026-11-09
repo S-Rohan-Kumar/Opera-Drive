@@ -189,3 +189,14 @@ export async function revokeResourcePermission(permissionId: string): Promise<vo
     method: 'DELETE',
   });
 }
+
+export interface StorageUsageData {
+  quotaBytes: number;
+  usedBytes: number;
+  usagePercentage: number;
+}
+
+export async function getStorageUsage(): Promise<StorageUsageData> {
+  return await apiRequest<StorageUsageData>('/auth/me/storage');
+}
+

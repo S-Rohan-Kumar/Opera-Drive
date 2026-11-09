@@ -10,6 +10,7 @@ import {
 import { env } from "../../config/env.js";
 import { PermissionService } from "../permissions/permission.service.js";
 import { EventBus } from "../sync/event-bus.js";
+import { QuotaService } from "../users/quota.service.js";
 
 export interface InitiateSessionInput {
     fileName: string;
@@ -75,6 +76,16 @@ export class ResumableService {
                 }
             }
         }
+        let quotaTargetUserId = userId;
+        if (targetFileId) {
+            const fOwner = await query(`SELECT owner_id FROM files WHERE id = $1`, [targetFileId]);
+            if (fOwner.rows.length > 0) quotaTargetUserId = fOwner.rows[0].owner_id;
+        } else if (targetParentId) {
+            const pOwner = await query(`SELECT owner_id FROM folders WHERE id = $1`, [targetParentId]);
+            if (pOwner.rows.length > 0) quotaTargetUserId = pOwner.rows[0].owner_id;
+        }
+        await QuotaService.checkQuota(quotaTargetUserId, input.expectedSizeBytes);
+
         const result = await query(
             `INSERT INTO upload_sessions 
              (user_id, file_id, parent_id, file_name, mime_type, expected_size_bytes, expected_sha256, status)

@@ -121,3 +121,9 @@ WHERE deleted_at IS NULL;
 CREATE INDEX IF NOT EXISTS idx_folders_name_trgm 
 ON folders USING gin (name gin_trgm_ops) 
 WHERE deleted_at IS NULL;
+
+-- 9. Storage Quota (Default 5 GB per user)
+ALTER TABLE users ADD COLUMN IF NOT EXISTS storage_quota_bytes BIGINT NOT NULL DEFAULT 5368709120;
+
+
+ALTER TABLE users ADD COLUMN IF NOT EXISTS storage_quota_bytes BIGINT NOT NULL DEFAULT 5368709120;

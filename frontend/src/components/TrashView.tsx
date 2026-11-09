@@ -30,7 +30,11 @@ function getFileIcon(mime?: string) {
   return <FileIcon className="w-5 h-5 text-sky-400" />;
 }
 
-export const TrashView: React.FC = () => {
+interface TrashViewProps {
+  onStorageChanged?: () => void;
+}
+
+export const TrashView: React.FC<TrashViewProps> = ({ onStorageChanged }) => {
   const [files, setFiles] = useState<TrashedItem[]>([]);
   const [folders, setFolders] = useState<TrashedFolder[]>([]);
   const [loading, setLoading] = useState(true);
@@ -76,6 +80,7 @@ export const TrashView: React.FC = () => {
         method: 'DELETE',
       });
       await fetchTrash();
+      onStorageChanged?.();
     } catch (err: any) {
       alert(err.message || 'Failed to permanently delete item');
     } finally {
@@ -91,6 +96,7 @@ export const TrashView: React.FC = () => {
         method: 'DELETE',
       });
       await fetchTrash();
+      onStorageChanged?.();
     } catch (err: any) {
       alert(err.message || 'Failed to empty trash');
     } finally {

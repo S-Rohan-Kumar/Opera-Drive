@@ -34,6 +34,7 @@ const DriveWorkspace: React.FC = () => {
 
   const [createFolderOpen, setCreateFolderOpen] = useState(false);
   const [uploadFileOpen, setUploadFileOpen] = useState(false);
+  const [storageRefreshTrigger, setStorageRefreshTrigger] = useState(0);
 
   const [shareModalState, setShareModalState] = useState<{
     isOpen: boolean;
@@ -152,6 +153,7 @@ const DriveWorkspace: React.FC = () => {
         method: 'DELETE',
       });
       await fetchContents(currentFolderId);
+      setStorageRefreshTrigger((prev) => prev + 1);
     } catch (err: any) {
       alert(err.message || 'Failed to delete file');
     }
@@ -205,6 +207,7 @@ const DriveWorkspace: React.FC = () => {
           }}
           onOpenCreateFolder={() => setCreateFolderOpen(true)}
           onOpenUploadFile={() => setUploadFileOpen(true)}
+          refreshStorageTrigger={storageRefreshTrigger}
         />
 
         <main className="flex-1 overflow-y-auto p-8">
@@ -267,7 +270,7 @@ const DriveWorkspace: React.FC = () => {
                 onOpenVersions={handleOpenVersions}
               />
             ) : (
-              <TrashView />
+              <TrashView onStorageChanged={() => setStorageRefreshTrigger((prev) => prev + 1)} />
             )}
           </div>
         </main>
@@ -285,6 +288,7 @@ const DriveWorkspace: React.FC = () => {
         parentId={currentFolderId}
         onUploadSuccess={async () => {
           await fetchContents(currentFolderId);
+          setStorageRefreshTrigger((prev) => prev + 1);
         }}
       />
 

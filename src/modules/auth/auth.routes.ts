@@ -2,6 +2,7 @@ import { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
 import { AuthService } from './auth.service.js';
 import { loginSchema, registerSchema } from './auth.schema.js';
 import { authenticate } from './auth.middleware.js';
+import { QuotaService } from '../users/quota.service.js';
 
 export async function authRoutes(app: FastifyInstance) {
   app.post('/register', async (request: FastifyRequest, reply: FastifyReply) => {
@@ -44,6 +45,14 @@ export async function authRoutes(app: FastifyInstance) {
     return reply.send({
       success: true,
       data: { user },
+    });
+  });
+
+  app.get('/me/storage', { preHandler: [authenticate] }, async (request: FastifyRequest, reply: FastifyReply) => {
+    const usage = await QuotaService.getStorageUsage(request.user.id);
+    return reply.send({
+      success: true,
+      data: usage,
     });
   });
 }
