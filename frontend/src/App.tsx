@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth, AuthProvider } from './context/AuthContext.js';
 import { AuthView } from './components/AuthView.js';
 import { Navbar } from './components/Navbar.js';
@@ -23,7 +23,6 @@ const DriveWorkspace: React.FC = () => {
   const [activeTab, setActiveTab] = useState<SidebarTab>('my-drive');
   const [currentFolderId, setCurrentFolderId] = useState<string | null>(null);
   const [breadcrumbs, setBreadcrumbs] = useState<BreadcrumbItem[]>([]);
-  const [searchQuery, setSearchQuery] = useState('');
 
   const [contents, setContents] = useState<FolderContents>({
     currentFolderId: null,
@@ -81,6 +80,12 @@ const DriveWorkspace: React.FC = () => {
   };
 
   const handleOpenSharedFolder = (folder: SharedFolder) => {
+    setActiveTab('my-drive');
+    setBreadcrumbs([{ id: folder.id, name: folder.name }]);
+    setCurrentFolderId(folder.id);
+  };
+
+  const handleOpenFolderFromSearch = (folder: { id: string; name: string }) => {
     setActiveTab('my-drive');
     setBreadcrumbs([{ id: folder.id, name: folder.name }]);
     setCurrentFolderId(folder.id);
@@ -152,20 +157,6 @@ const DriveWorkspace: React.FC = () => {
     });
   };
 
-  const filteredFolders = useMemo(() => {
-    if (!searchQuery.trim()) return contents.folders;
-    return contents.folders.filter((f) =>
-      f.name.toLowerCase().includes(searchQuery.toLowerCase())
-    );
-  }, [contents.folders, searchQuery]);
-
-  const filteredFiles = useMemo(() => {
-    if (!searchQuery.trim()) return contents.files;
-    return contents.files.filter((f) =>
-      f.name.toLowerCase().includes(searchQuery.toLowerCase())
-    );
-  }, [contents.files, searchQuery]);
-
   if (authLoading) {
     return (
       <div className="min-h-screen bg-[#0B0B0C] flex items-center justify-center">
@@ -178,11 +169,14 @@ const DriveWorkspace: React.FC = () => {
     return <AuthView />;
   }
 
-  const isEmpty = filteredFolders.length === 0 && filteredFiles.length === 0;
+  const isEmpty = contents.folders.length === 0 && contents.files.length === 0;
 
   return (
     <div className="min-h-screen bg-[#0B0B0C] text-white flex flex-col">
-      <Navbar searchQuery={searchQuery} onSearchChange={setSearchQuery} />
+      <Navbar
+        onOpenFolder={handleOpenFolderFromSearch}
+        onOpenVersions={handleOpenVersions}
+      />
 
       <div className="flex flex-1 overflow-hidden">
         <Sidebar
@@ -214,12 +208,10 @@ const DriveWorkspace: React.FC = () => {
                       <HardDrive className="w-8 h-8 text-[#C6F432]" />
                     </div>
                     <h3 className="text-base font-bold text-white mb-1">
-                      {searchQuery ? 'No matching files or folders' : 'This folder is empty'}
+                      This folder is empty
                     </h3>
                     <p className="text-xs text-[#A1A1AA] max-w-sm mb-6">
-                      {searchQuery
-                        ? 'Try searching with a different filename or clear the search query.'
-                        : 'Upload files with resumable streaming or create a new folder to organize.'}
+                      Upload files with resumable streaming or create a new folder to organize.
                     </p>
                     <div className="flex gap-3">
                       <button
@@ -239,13 +231,13 @@ const DriveWorkspace: React.FC = () => {
                 ) : (
                   <div className="space-y-6">
                     <FolderGrid
-                      folders={filteredFolders}
+                      folders={contents.folders}
                       onOpenFolder={handleOpenFolder}
                       onDeleteFolder={handleDeleteFolder}
                       onShareFolder={(f) => handleOpenShare('folder', f.id, f.name)}
                     />
                     <FileList
-                      files={filteredFiles}
+                      files={contents.files}
                       onDeleteFile={handleDeleteFile}
                       onOpenVersions={handleOpenVersions}
                       onShareFile={(f) => handleOpenShare('file', f.id, f.name)}

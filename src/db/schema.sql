@@ -1,5 +1,5 @@
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";
-
+CREATE EXTENSION IF NOT EXISTS "pg_trgm";
 -- 1. Users Table
 
 CREATE TABLE IF NOT EXISTS users (
@@ -112,3 +112,12 @@ CREATE TABLE IF NOT EXISTS upload_parts (
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     CONSTRAINT uq_session_part UNIQUE(session_id, part_number)
 );
+
+-- 8. GIN Trigram Indexes for Substring & Fuzzy Search
+CREATE INDEX IF NOT EXISTS idx_files_name_trgm 
+ON files USING gin (name gin_trgm_ops) 
+WHERE deleted_at IS NULL;
+
+CREATE INDEX IF NOT EXISTS idx_folders_name_trgm 
+ON folders USING gin (name gin_trgm_ops) 
+WHERE deleted_at IS NULL;
