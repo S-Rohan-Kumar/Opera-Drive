@@ -54,8 +54,8 @@ export class FolderService {
         const actualFolderId = isRoot ? null : folderId;
         if (!isRoot) {
             const folder = await query(
-                `SELECT id, name FROM folders WHERE id = $1 AND owner_id = $2 AND deleted_at IS NULL`,
-                [actualFolderId, userId],
+                `SELECT id, name, owner_id FROM folders WHERE id = $1 AND deleted_at IS NULL`,
+                [actualFolderId],
             );
             if (folder.rows.length === 0) {
                 const err: any = new Error("Folder not found");
@@ -63,11 +63,23 @@ export class FolderService {
                 err.code = "FOLDER_NOT_FOUND";
                 throw err;
             }
+            if (folder.rows[0].owner_id !== userId) {
+                const perm = await query(
+                    `SELECT 1 FROM permissions WHERE resource_type = 'folder' AND resource_id = $1 AND user_id = $2`,
+                    [actualFolderId, userId],
+                );
+                if (perm.rows.length === 0) {
+                    const err: any = new Error("Folder not found");
+                    err.statusCode = 404;
+                    err.code = "FOLDER_NOT_FOUND";
+                    throw err;
+                }
+            }
         }
         const foldersQuery = isRoot
             ? `SELECT id, name, parent_id, updated_at FROM folders WHERE owner_id = $1 AND parent_id IS NULL AND deleted_at IS NULL ORDER BY name ASC`
-            : `SELECT id, name, parent_id, updated_at FROM folders WHERE owner_id = $1 AND parent_id = $2 AND deleted_at IS NULL ORDER BY name ASC`;
-        const foldersParams = isRoot ? [userId] : [userId, actualFolderId];
+            : `SELECT id, name, parent_id, updated_at FROM folders WHERE parent_id = $1 AND deleted_at IS NULL ORDER BY name ASC`;
+        const foldersParams = isRoot ? [userId] : [actualFolderId];
         const folders = await query(foldersQuery, foldersParams);
         const filesQuery = isRoot
             ? `SELECT f.id, f.name, f.parent_id, f.updated_at, v.size_bytes, v.mime_type
@@ -77,7 +89,7 @@ export class FolderService {
             : `SELECT f.id, f.name, f.parent_id, f.updated_at, v.size_bytes, v.mime_type
          FROM files f
          LEFT JOIN file_versions v ON f.current_version_id = v.id
-         WHERE f.owner_id = $1 AND f.parent_id = $2 AND f.deleted_at IS NULL ORDER BY f.name ASC`;
+         WHERE f.parent_id = $1 AND f.deleted_at IS NULL ORDER BY f.name ASC`;
         const files = await query(filesQuery, foldersParams);
         return {
             currentFolderId: actualFolderId,

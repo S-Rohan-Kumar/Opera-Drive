@@ -7,6 +7,7 @@ import {
     deleteObject,
 } from "../../storage/minio.js";
 import { env } from "../../config/env.js";
+import { PermissionService } from "../permissions/permission.service.js";
 
 export interface FileRecord {
     id: string;
@@ -138,12 +139,13 @@ export class FileService {
     }
 
     static async getFile(userId: string, fileId: string) {
+        await PermissionService.checkFileAccess(userId, fileId);
         const result = await query(
             `SELECT f.*, v.storage_key, v.size_bytes, v.mime_type, v.checksum_sha256, v.version_number
        FROM files f
        INNER JOIN file_versions v ON f.current_version_id = v.id
-       WHERE f.id = $1 AND f.owner_id = $2 AND f.deleted_at IS NULL`,
-            [fileId, userId],
+       WHERE f.id = $1 AND f.deleted_at IS NULL`,
+            [fileId],
         );
         if (result.rows.length === 0) {
             const err: any = new Error("File not found");
@@ -181,9 +183,10 @@ export class FileService {
         }
     }
     static async listVersions(userId: string, fileId: string) {
+        await PermissionService.checkFileAccess(userId, fileId);
         const fileRes = await query(
-            `SELECT id, current_version_id, name FROM files WHERE id = $1 AND owner_id = $2 AND deleted_at IS NULL`,
-            [fileId, userId],
+            `SELECT id, current_version_id, name FROM files WHERE id = $1 AND deleted_at IS NULL`,
+            [fileId],
         );
         if (fileRes.rows.length === 0) {
             const err: any = new Error("File not found");
@@ -212,9 +215,10 @@ export class FileService {
         fileId: string,
         versionId: string,
     ) {
+        await PermissionService.checkFileAccess(userId, fileId);
         const fileRes = await query(
-            `SELECT id, name FROM files WHERE id = $1 AND owner_id = $2 AND deleted_at IS NULL`,
-            [fileId, userId],
+            `SELECT id, name FROM files WHERE id = $1 AND deleted_at IS NULL`,
+            [fileId],
         );
         if (fileRes.rows.length === 0) {
             const err: any = new Error("File not found");
@@ -253,9 +257,16 @@ export class FileService {
         fileId: string,
         versionId: string,
     ) {
+        const access = await PermissionService.checkFileAccess(userId, fileId);
+        if (access.role === "viewer") {
+            const err: any = new Error("Viewers cannot rollback file versions");
+            err.statusCode = 403;
+            err.code = "FORBIDDEN";
+            throw err;
+        }
         const fileRes = await query(
-            `SELECT id, current_version_id FROM files WHERE id = $1 AND owner_id = $2 AND deleted_at IS NULL`,
-            [fileId, userId],
+            `SELECT id, current_version_id FROM files WHERE id = $1 AND deleted_at IS NULL`,
+            [fileId],
         );
         if (fileRes.rows.length === 0) {
             const err: any = new Error("File not found");
