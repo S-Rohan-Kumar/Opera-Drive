@@ -124,7 +124,7 @@ export class PermissionService {
     static async getSharedWithMe(userId: string) {
         const sharedFiles = await query(
             `SELECT f.id, f.name, f.parent_id, f.owner_id, f.updated_at, p.role,
-                    fv.size_bytes, fv.mime_type, u.full_name AS owner_name, u.email AS owner_email
+                    fv.version_number, fv.size_bytes, fv.mime_type, u.full_name AS owner_name, u.email AS owner_email
              FROM permissions p
              JOIN files f ON p.resource_id = f.id AND p.resource_type = 'file'
              LEFT JOIN file_versions fv ON f.current_version_id = fv.id

@@ -13,12 +13,12 @@ interface BreadcrumbsProps {
 
 export const Breadcrumbs: React.FC<BreadcrumbsProps> = ({ items, onNavigate }) => {
   return (
-    <nav className="flex items-center gap-1.5 text-sm text-slate-500 mb-6 flex-wrap">
+    <nav className="flex items-center gap-1.5 text-sm text-[#A1A1AA] mb-6 flex-wrap">
       <button
         onClick={() => onNavigate(null)}
-        className="flex items-center gap-1.5 font-medium text-slate-700 hover:text-blue-600 transition p-1 rounded-lg hover:bg-slate-100"
+        className="flex items-center gap-1.5 font-medium text-white hover:text-[#C6F432] transition px-2 py-1 rounded-lg hover:bg-[#18181B]"
       >
-        <HardDrive className="w-4 h-4 text-blue-600" />
+        <HardDrive className="w-4 h-4 text-[#C6F432]" />
         <span>My Drive</span>
       </button>
 
@@ -26,14 +26,14 @@ export const Breadcrumbs: React.FC<BreadcrumbsProps> = ({ items, onNavigate }) =
         const isLast = index === items.length - 1;
         return (
           <React.Fragment key={item.id ?? index}>
-            <ChevronRight className="w-4 h-4 text-slate-400 shrink-0" />
+            <ChevronRight className="w-4 h-4 text-[#71717A] shrink-0" />
             <button
               onClick={() => onNavigate(item.id)}
               disabled={isLast}
-              className={`p-1 rounded-lg transition font-medium truncate max-w-[200px] ${
+              className={`px-2 py-1 rounded-lg transition font-medium truncate max-w-[200px] ${
                 isLast
-                  ? 'text-slate-800 font-semibold cursor-default'
-                  : 'text-slate-600 hover:text-blue-600 hover:bg-slate-100'
+                  ? 'text-[#C6F432] font-semibold cursor-default bg-[#18181B] border border-[#27272A]'
+                  : 'text-[#A1A1AA] hover:text-white hover:bg-[#18181B]'
               }`}
             >
               {item.name}

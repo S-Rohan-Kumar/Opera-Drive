@@ -27,6 +27,7 @@ export async function resumableRoutes(app: FastifyInstance) {
 
     app.put(
         "/:id/parts/:partNumber",
+        { bodyLimit: 100 * 1024 * 1024 },
         async (request: FastifyRequest, reply: FastifyReply) => {
             const { id, partNumber } = partParamSchema.parse(request.params);
 

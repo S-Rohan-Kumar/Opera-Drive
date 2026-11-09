@@ -8,6 +8,7 @@ import {
     minioClient,
 } from "../../storage/minio.js";
 import { env } from "../../config/env.js";
+import { PermissionService } from "../permissions/permission.service.js";
 
 export interface InitiateSessionInput {
     fileName: string;
@@ -15,30 +16,64 @@ export interface InitiateSessionInput {
     expectedSizeBytes: number;
     expectedSha256: string;
     parentId?: string | null;
+    fileId?: string | null;
 }
 
 export class ResumableService {
     static async initiate(userId: string, input: InitiateSessionInput) {
-        const targetParentId = input.parentId || null;
-        if (targetParentId) {
-            const parent = await query(
-                `SELECT id FROM folders WHERE id = $1 AND owner_id = $2 AND deleted_at IS NULL`,
-                [targetParentId, userId],
+        let targetParentId = input.parentId || null;
+        let targetFileId = input.fileId || null;
+
+        if (targetFileId) {
+            const fileCheck = await PermissionService.checkFileAccess(userId, targetFileId);
+            if (fileCheck.role !== "owner" && fileCheck.role !== "editor") {
+                const err: any = new Error("You do not have permission to update this file");
+                err.statusCode = 403;
+                err.code = "FORBIDDEN";
+                throw err;
+            }
+            const fileRow = await query(`SELECT parent_id FROM files WHERE id = $1`, [targetFileId]);
+            if (fileRow.rows.length > 0) {
+                targetParentId = fileRow.rows[0].parent_id;
+            }
+        } else if (targetParentId) {
+            const parentRes = await query(
+                `SELECT id, owner_id FROM folders WHERE id = $1 AND deleted_at IS NULL`,
+                [targetParentId],
             );
-            if (parent.rows.length === 0) {
+            if (parentRes.rows.length === 0) {
                 const err: any = new Error("Parent folder not found");
                 err.statusCode = 404;
                 err.code = "PARENT_FOLDER_NOT_FOUND";
                 throw err;
             }
+            const parentFolder = parentRes.rows[0];
+            if (parentFolder.owner_id !== userId) {
+                const permRes = await query(
+                    `SELECT role FROM permissions WHERE resource_type = 'folder' AND resource_id = $1 AND user_id = $2`,
+                    [targetParentId, userId],
+                );
+                if (
+                    permRes.rows.length === 0 ||
+                    permRes.rows[0].role !== "editor"
+                ) {
+                    const err: any = new Error(
+                        "You do not have permission to upload to this folder",
+                    );
+                    err.statusCode = 403;
+                    err.code = "FORBIDDEN";
+                    throw err;
+                }
+            }
         }
         const result = await query(
             `INSERT INTO upload_sessions 
-             (user_id, parent_id, file_name, mime_type, expected_size_bytes, expected_sha256, status)
-             VALUES ($1, $2, $3, $4, $5, $6, 'INITIATED')
-             RETURNING id, file_name, mime_type, expected_size_bytes, expected_sha256, status, expires_at, created_at`,
+             (user_id, file_id, parent_id, file_name, mime_type, expected_size_bytes, expected_sha256, status)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, 'INITIATED')
+             RETURNING id, file_id, file_name, mime_type, expected_size_bytes, expected_sha256, status, expires_at, created_at`,
             [
                 userId,
+                targetFileId,
                 targetParentId,
                 input.fileName,
                 input.mimeType,
@@ -235,31 +270,52 @@ export class ResumableService {
         const client = await getClient();
         try {
             await client.query("BEGIN");
-            const existingFileRes = await client.query(
-                `SELECT id FROM files 
-                 WHERE owner_id = $1 
-                   AND parent_id IS NOT DISTINCT FROM $2::uuid
-                   AND name = $3 
-                   AND deleted_at IS NULL`,
-                [userId, session.parent_id, session.file_name],
-            );
             let fileId: string;
             let versionNumber = 1;
-            if (existingFileRes.rows.length > 0) {
-                fileId = existingFileRes.rows[0].id;
+
+            if (session.file_id) {
+                fileId = session.file_id;
                 const vRes = await client.query(
                     `SELECT COALESCE(MAX(version_number), 0) + 1 AS next_v FROM file_versions WHERE file_id = $1`,
                     [fileId],
                 );
                 versionNumber = vRes.rows[0].next_v;
             } else {
-                const fileInsert = await client.query(
-                    `INSERT INTO files (owner_id, parent_id, name)
-                     VALUES ($1, $2, $3)
-                     RETURNING id`,
-                    [userId, session.parent_id, session.file_name],
+                let targetOwnerId = userId;
+                if (session.parent_id) {
+                    const folderRes = await client.query(
+                        `SELECT owner_id FROM folders WHERE id = $1`,
+                        [session.parent_id],
+                    );
+                    if (folderRes.rows.length > 0) {
+                        targetOwnerId = folderRes.rows[0].owner_id;
+                    }
+                }
+
+                const existingFileRes = await client.query(
+                    `SELECT id FROM files 
+                     WHERE owner_id = $1 
+                       AND parent_id IS NOT DISTINCT FROM $2::uuid
+                       AND name = $3 
+                       AND deleted_at IS NULL`,
+                    [targetOwnerId, session.parent_id, session.file_name],
                 );
-                fileId = fileInsert.rows[0].id;
+                if (existingFileRes.rows.length > 0) {
+                    fileId = existingFileRes.rows[0].id;
+                    const vRes = await client.query(
+                        `SELECT COALESCE(MAX(version_number), 0) + 1 AS next_v FROM file_versions WHERE file_id = $1`,
+                        [fileId],
+                    );
+                    versionNumber = vRes.rows[0].next_v;
+                } else {
+                    const fileInsert = await client.query(
+                        `INSERT INTO files (owner_id, parent_id, name)
+                         VALUES ($1, $2, $3)
+                         RETURNING id`,
+                        [targetOwnerId, session.parent_id, session.file_name],
+                    );
+                    fileId = fileInsert.rows[0].id;
+                }
             }
             const versionInsert = await client.query(
                 `INSERT INTO file_versions 

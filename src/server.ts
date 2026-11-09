@@ -17,6 +17,7 @@ import { permissionRoutes } from "./modules/permissions/permission.routes.js";
 
 export async function buildServer(): Promise<FastifyInstance> {
     const app = fastify({
+        bodyLimit: 100 * 1024 * 1024,
         logger:
             env.NODE_ENV === "development"
                 ? {
@@ -63,7 +64,7 @@ export async function buildServer(): Promise<FastifyInstance> {
     });
     app.addContentTypeParser(
         "application/octet-stream",
-        { parseAs: "buffer" },
+        { parseAs: "buffer", bodyLimit: 100 * 1024 * 1024 },
         (_req, body, done) => {
             done(null, body);
         },

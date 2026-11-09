@@ -6,6 +6,7 @@ export const initiateSessionSchema = z.object({
     expectedSizeBytes: z.number().int().positive(),
     expectedSha256: z.string().length(64),
     parentId: z.string().uuid().nullable().optional(),
+    fileId: z.string().uuid().nullable().optional(),
 });
 
 export const sessionParamSchema = z.object({

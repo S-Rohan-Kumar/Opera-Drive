@@ -36,52 +36,53 @@ export const CreateFolderModal: React.FC<CreateFolderModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4 z-50 animate-in fade-in duration-100">
-      <div className="bg-white rounded-2xl max-w-sm w-full p-6 shadow-2xl border border-slate-100">
-        <div className="flex items-center justify-between mb-4">
+    <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-in fade-in duration-100">
+      <div className="bg-[#0B0B0C] rounded-2xl max-w-sm w-full p-6 shadow-2xl border border-[#27272A] shadow-black/80">
+        <div className="flex items-center justify-between mb-4 pb-3 border-b border-[#27272A]">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center">
-              <FolderPlus className="w-5 h-5" />
+            <div className="w-8 h-8 rounded-lg bg-[#C6F432]/10 text-[#C6F432] flex items-center justify-center">
+              <FolderPlus className="w-4 h-4" />
             </div>
-            <h3 className="font-semibold text-slate-800">New folder</h3>
+            <h3 className="font-bold text-white text-sm">New Folder</h3>
           </div>
           <button
             onClick={onClose}
-            className="text-slate-400 hover:text-slate-600 p-1 rounded-lg hover:bg-slate-50 transition"
+            className="text-[#71717A] hover:text-white p-1 rounded-lg hover:bg-[#18181B] transition"
           >
-            <X className="w-5 h-5" />
+            <X className="w-4 h-4" />
           </button>
         </div>
 
         {error && (
-          <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-600 text-xs rounded-xl">
+          <div className="mb-4 p-3 bg-rose-500/10 border border-rose-500/20 text-rose-400 text-xs rounded-xl">
             {error}
           </div>
         )}
 
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={handleSubmit} className="space-y-4">
           <input
             type="text"
             required
             autoFocus
             value={name}
             onChange={(e) => setName(e.target.value)}
-            placeholder="Untitled folder"
-            className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-sm text-slate-800 mb-6"
+            placeholder="Folder name"
+            className="w-full px-3.5 py-2.5 bg-[#18181B] border border-[#27272A] rounded-xl text-sm text-white placeholder-[#71717A] focus:border-[#C6F432] focus:outline-none transition"
           />
 
-          <div className="flex items-center justify-end gap-2">
+          <div className="flex items-center justify-end gap-2 pt-2">
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 rounded-xl transition"
+              disabled={loading}
+              className="px-4 py-2 rounded-xl text-xs font-semibold text-[#A1A1AA] hover:text-white hover:bg-[#18181B] transition border border-[#27272A]"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={loading || !name.trim()}
-              className="px-5 py-2 text-sm font-medium bg-blue-600 text-white hover:bg-blue-700 rounded-xl transition shadow-sm disabled:opacity-50"
+              className="px-4 py-2 rounded-xl bg-[#C6F432] hover:bg-[#b2dc2b] text-[#0B0B0C] font-bold text-xs uppercase tracking-wider transition disabled:opacity-40 shadow-md shadow-[#C6F432]/10"
             >
               {loading ? 'Creating...' : 'Create'}
             </button>

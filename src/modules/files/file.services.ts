@@ -29,16 +29,30 @@ export class FileService {
         parentId?: string | null,
     ) {
         const targetParentId = parentId || null;
+        let containerOwnerId = userId;
         if (targetParentId) {
-            const parent = await query(
-                `SELECT id FROM folders WHERE id = $1 AND owner_id = $2 AND deleted_at IS NULL`,
-                [targetParentId, userId],
+            const parentRes = await query(
+                `SELECT id, owner_id FROM folders WHERE id = $1 AND deleted_at IS NULL`,
+                [targetParentId],
             );
-            if (parent.rows.length === 0) {
+            if (parentRes.rows.length === 0) {
                 const err: any = new Error("Parent folder not found");
                 err.statusCode = 404;
                 err.code = "PARENT_FOLDER_NOT_FOUND";
                 throw err;
+            }
+            containerOwnerId = parentRes.rows[0].owner_id;
+            if (containerOwnerId !== userId) {
+                const permRes = await query(
+                    `SELECT role FROM permissions WHERE resource_type = 'folder' AND resource_id = $1 AND user_id = $2`,
+                    [targetParentId, userId],
+                );
+                if (permRes.rows.length === 0 || permRes.rows[0].role !== "editor") {
+                    const err: any = new Error("You do not have permission to upload to this folder");
+                    err.statusCode = 403;
+                    err.code = "FORBIDDEN";
+                    throw err;
+                }
             }
         }
 
@@ -83,7 +97,7 @@ export class FileService {
                 `INSERT INTO files (owner_id, parent_id, name)
          VALUES ($1, $2, $3)
          RETURNING *`,
-                [userId, targetParentId, filename],
+                [containerOwnerId, targetParentId, filename],
             );
             const file = fileResult.rows[0];
 

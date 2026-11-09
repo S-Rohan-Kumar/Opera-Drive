@@ -82,11 +82,11 @@ export class FolderService {
         const foldersParams = isRoot ? [userId] : [actualFolderId];
         const folders = await query(foldersQuery, foldersParams);
         const filesQuery = isRoot
-            ? `SELECT f.id, f.name, f.parent_id, f.updated_at, v.size_bytes, v.mime_type
+            ? `SELECT f.id, f.name, f.parent_id, f.updated_at, v.version_number, v.size_bytes, v.mime_type
          FROM files f
          LEFT JOIN file_versions v ON f.current_version_id = v.id
          WHERE f.owner_id = $1 AND f.parent_id IS NULL AND f.deleted_at IS NULL ORDER BY f.name ASC`
-            : `SELECT f.id, f.name, f.parent_id, f.updated_at, v.size_bytes, v.mime_type
+            : `SELECT f.id, f.name, f.parent_id, f.updated_at, v.version_number, v.size_bytes, v.mime_type
          FROM files f
          LEFT JOIN file_versions v ON f.current_version_id = v.id
          WHERE f.parent_id = $1 AND f.deleted_at IS NULL ORDER BY f.name ASC`;

@@ -99,6 +99,8 @@ CREATE TABLE IF NOT EXISTS upload_sessions (
 CREATE INDEX IF NOT EXISTS idx_upload_sessions_expires_at 
 ON upload_sessions (status, expires_at);
 
+ALTER TABLE upload_sessions ADD COLUMN IF NOT EXISTS file_id UUID NULL REFERENCES files(id) ON DELETE CASCADE;
+
 -- 7. Upload Parts Table (Track each chunk received)
 CREATE TABLE IF NOT EXISTS upload_parts (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),

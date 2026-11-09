@@ -30,20 +30,25 @@ export const AuthView: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col justify-center items-center px-4">
-      <div className="w-full max-w-md bg-white rounded-2xl shadow-xl p-8 border border-slate-100">
+    <div className="min-h-screen bg-[#0B0B0C] flex flex-col justify-center items-center px-4">
+      <div className="w-full max-w-md bg-[#121214] rounded-2xl shadow-2xl p-8 border border-[#27272A] shadow-black/80">
         <div className="flex flex-col items-center mb-8">
-          <div className="w-16 h-16 bg-blue-600 rounded-2xl flex items-center justify-center text-white mb-3 shadow-lg shadow-blue-500/30">
-            <Cloud className="w-9 h-9" />
+          <div className="w-16 h-16 bg-[#C6F432] rounded-2xl flex items-center justify-center text-[#0B0B0C] mb-3 shadow-xl shadow-[#C6F432]/10">
+            <Cloud className="w-9 h-9 stroke-[2.5]" />
           </div>
-          <h1 className="text-2xl font-bold text-slate-800 tracking-tight">Opera Drive</h1>
-          <p className="text-slate-500 text-sm mt-1">
+          <div className="flex items-center gap-2">
+            <h1 className="text-2xl font-black text-white tracking-tight">Opera</h1>
+            <span className="text-xs uppercase font-extrabold tracking-wider px-2 py-0.5 rounded-full bg-[#C6F432]/15 text-[#C6F432] border border-[#C6F432]/30">
+              Drive
+            </span>
+          </div>
+          <p className="text-[#A1A1AA] text-xs mt-1.5">
             {isRegister ? 'Create an account to start storing files' : 'Sign in to access your cloud files'}
           </p>
         </div>
 
         {error && (
-          <div className="mb-6 p-4 rounded-xl bg-red-50 border border-red-200 text-red-600 text-sm">
+          <div className="mb-6 p-4 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400 text-xs">
             {error}
           </div>
         )}
@@ -51,11 +56,11 @@ export const AuthView: React.FC = () => {
         <form onSubmit={handleSubmit} className="space-y-4">
           {isRegister && (
             <div>
-              <label className="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1.5">
+              <label className="block text-xs font-semibold text-[#A1A1AA] uppercase tracking-wider mb-1.5">
                 Full Name
               </label>
               <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-[#71717A]">
                   <UserIcon className="w-5 h-5" />
                 </div>
                 <input
@@ -63,19 +68,19 @@ export const AuthView: React.FC = () => {
                   required
                   value={fullName}
                   onChange={(e) => setFullName(e.target.value)}
-                  placeholder="Ada Lovelace"
-                  className="w-full pl-11 pr-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-slate-800 text-sm transition"
+                  placeholder="John Doe"
+                  className="w-full pl-11 pr-4 py-2.5 bg-[#18181B] border border-[#27272A] rounded-xl text-sm text-white placeholder-[#71717A] focus:border-[#C6F432] focus:outline-none transition"
                 />
               </div>
             </div>
           )}
 
           <div>
-            <label className="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1.5">
+            <label className="block text-xs font-semibold text-[#A1A1AA] uppercase tracking-wider mb-1.5">
               Email Address
             </label>
             <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+              <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-[#71717A]">
                 <Mail className="w-5 h-5" />
               </div>
               <input
@@ -83,28 +88,27 @@ export const AuthView: React.FC = () => {
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="name@example.com"
-                className="w-full pl-11 pr-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-slate-800 text-sm transition"
+                placeholder="user@example.com"
+                className="w-full pl-11 pr-4 py-2.5 bg-[#18181B] border border-[#27272A] rounded-xl text-sm text-white placeholder-[#71717A] focus:border-[#C6F432] focus:outline-none transition"
               />
             </div>
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1.5">
+            <label className="block text-xs font-semibold text-[#A1A1AA] uppercase tracking-wider mb-1.5">
               Password
             </label>
             <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+              <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-[#71717A]">
                 <Lock className="w-5 h-5" />
               </div>
               <input
                 type="password"
                 required
-                minLength={6}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
-                className="w-full pl-11 pr-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-slate-800 text-sm transition"
+                className="w-full pl-11 pr-4 py-2.5 bg-[#18181B] border border-[#27272A] rounded-xl text-sm text-white placeholder-[#71717A] focus:border-[#C6F432] focus:outline-none transition"
               />
             </div>
           </div>
@@ -112,7 +116,7 @@ export const AuthView: React.FC = () => {
           <button
             type="submit"
             disabled={loading}
-            className="w-full mt-2 py-3 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-medium text-sm transition shadow-md shadow-blue-500/20 disabled:opacity-50"
+            className="w-full py-3 px-4 rounded-xl bg-[#C6F432] hover:bg-[#b2dc2b] text-[#0B0B0C] font-extrabold text-sm uppercase tracking-wider transition duration-150 disabled:opacity-50 shadow-lg shadow-[#C6F432]/10 mt-2"
           >
             {loading ? 'Please wait...' : isRegister ? 'Create Account' : 'Sign In'}
           </button>
@@ -125,11 +129,9 @@ export const AuthView: React.FC = () => {
               setIsRegister(!isRegister);
               setError(null);
             }}
-            className="text-sm text-blue-600 hover:text-blue-700 font-medium transition"
+            className="text-xs text-[#A1A1AA] hover:text-[#C6F432] transition font-medium"
           >
-            {isRegister
-              ? 'Already have an account? Sign in'
-              : "Don't have an account? Create one"}
+            {isRegister ? 'Already have an account? Sign in' : "Don't have an account? Create one"}
           </button>
         </div>
       </div>
