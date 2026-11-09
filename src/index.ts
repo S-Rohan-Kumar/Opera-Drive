@@ -17,7 +17,7 @@ async function main() {
   const minioConnected = await testMinioConnection();
   if (minioConnected) {
     console.log('✅ MinIO connected.');
-    await -ensureBucketExists();
+    await ensureBucketExists();
   } else {
     console.warn('⚠️ MinIO connection failed.');
   }
