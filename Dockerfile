@@ -21,7 +21,7 @@ FROM node:20-alpine AS runner
 WORKDIR /app
 
 # Install Redis, curl, and MinIO binary
-RUN apk add --no-cache redis curl \
+RUN apk add --no-cache redis curl gcompat libc6-compat \
     && curl -O https://dl.min.io/server/minio/release/linux-amd64/minio \
     && chmod +x minio \
     && mv minio /usr/local/bin/

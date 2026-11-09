@@ -1,5 +1,6 @@
 import { env } from './config/env.js';
 import { pool, testDbConnection } from './db/client.js';
+import { runMigrations } from './db/migrate.js';
 import { buildServer } from './server.js';
 import { ensureBucketExists, testMinioConnection } from './storage/minio.js';
 import { startWorkers, stopWorkers } from './modules/workers/index.js';
@@ -10,6 +11,11 @@ async function main() {
   const dbConnected = await testDbConnection();
   if (dbConnected) {
     console.log('✅ PostgreSQL connected.');
+    try {
+      await runMigrations();
+    } catch (migErr) {
+      console.error('⚠️ Database migration error on startup:', migErr);
+    }
   } else {
     console.warn('⚠️ PostgreSQL connection failed.');
   }
