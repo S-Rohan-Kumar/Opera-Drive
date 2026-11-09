@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { HardDrive, Plus, FolderPlus, Upload, Users, Cloud } from 'lucide-react';
+import { HardDrive, Plus, FolderPlus, Upload, Users, Cloud, Trash2 } from 'lucide-react';
 
-export type SidebarTab = 'my-drive' | 'shared-with-me';
+export type SidebarTab = 'my-drive' | 'shared-with-me' | 'trash';
 
 interface SidebarProps {
   activeTab: SidebarTab;
@@ -91,6 +91,18 @@ export const Sidebar: React.FC<SidebarProps> = ({
           >
             <Users className={`w-4 h-4 ${activeTab === 'shared-with-me' ? 'text-[#C6F432]' : ''}`} />
             <span>Shared with me</span>
+          </button>
+
+          <button
+            onClick={() => onSelectTab('trash')}
+            className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl font-medium text-sm transition ${
+              activeTab === 'trash'
+                ? 'bg-[#18181B] text-[#C6F432] border border-[#C6F432]/30 shadow-sm'
+                : 'text-[#A1A1AA] hover:text-white hover:bg-[#18181B]'
+            }`}
+          >
+            <Trash2 className={`w-4 h-4 ${activeTab === 'trash' ? 'text-[#C6F432]' : ''}`} />
+            <span>Trash</span>
           </button>
         </nav>
       </div>

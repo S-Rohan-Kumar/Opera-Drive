@@ -14,6 +14,7 @@ import { folderRoutes } from "./modules/folders/folder.routes.js";
 import { fileRoutes } from "./modules/files/file.routes.js";
 import { resumableRoutes } from "./modules/files/resumable.routes.js";
 import { permissionRoutes } from "./modules/permissions/permission.routes.js";
+import { trashRoutes } from "./modules/trash/trash.routes.js";
 
 export async function buildServer(): Promise<FastifyInstance> {
     const app = fastify({
@@ -81,6 +82,7 @@ export async function buildServer(): Promise<FastifyInstance> {
     await app.register(fileRoutes, { prefix: "/api/v1/files" });
     await app.register(resumableRoutes, { prefix: "/api/v1/files/resumable" });
     await app.register(permissionRoutes, { prefix: "/api/v1/permissions" });
+    await app.register(trashRoutes, { prefix: "/api/v1/trash" });
 
     app.get("/health", async (_req: FastifyRequest, reply: FastifyReply) => {
         const [dbOk, minioOk] = await Promise.all([

@@ -12,7 +12,14 @@
     "migrate": "tsx src/db/migrate.ts",
     "test": "vitest run"
   },
-  "keywords": ["storage", "drive", "s3", "minio", "fastify", "postgresql"],
+  "keywords": [
+    "storage",
+    "drive",
+    "s3",
+    "minio",
+    "fastify",
+    "postgresql"
+  ],
   "author": "",
   "license": "ISC",
   "dependencies": {
@@ -20,8 +27,10 @@
     "@fastify/jwt": "^9.0.4",
     "@fastify/multipart": "^9.0.3",
     "bcryptjs": "^3.0.2",
+    "bullmq": "^6.7.2",
     "dotenv": "^16.4.7",
     "fastify": "^5.2.1",
+    "ioredis": "^6.0.0",
     "minio": "^8.0.4",
     "pg": "^8.13.3",
     "zod": "^3.24.2"

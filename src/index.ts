@@ -2,6 +2,7 @@ import { env } from './config/env.js';
 import { pool, testDbConnection } from './db/client.js';
 import { buildServer } from './server.js';
 import { ensureBucketExists, testMinioConnection } from './storage/minio.js';
+import { startWorkers, stopWorkers } from './modules/workers/index.js';
 
 async function main() {
   console.log('🚀 Starting Opera Drive Backend...');
@@ -22,6 +23,7 @@ async function main() {
   }
 
   const server = await buildServer();
+  startWorkers();
 
   try {
     await server.listen({ port: env.PORT, host: env.HOST });
@@ -34,6 +36,7 @@ async function main() {
 
   const shutdown = async (signal: string) => {
     console.log(`\n🛑 Received ${signal}. Shutting down gracefully...`);
+    await stopWorkers();
     await server.close();
     await pool.end();
     console.log('👋 Clean exit completed.');

@@ -13,6 +13,7 @@ import { UploadFileModal } from './components/UploadFileModal.js';
 import { ShareModal } from './components/ShareModal.js';
 import { VersionHistoryModal } from './components/VersionHistoryModal.js';
 import { SharedWithMeView } from './components/SharedWithMeView.js';
+import { TrashView } from './components/TrashView.js';
 import type { Folder, DriveFile, FolderContents, SharedFolder } from './types/index.js';
 import { apiRequest } from './api/client.js';
 import { HardDrive, RefreshCw } from 'lucide-react';
@@ -252,11 +253,13 @@ const DriveWorkspace: React.FC = () => {
                   </div>
                 )}
               </>
-            ) : (
+            ) : activeTab === 'shared-with-me' ? (
               <SharedWithMeView
                 onOpenFolder={handleOpenSharedFolder}
                 onOpenVersions={handleOpenVersions}
               />
+            ) : (
+              <TrashView />
             )}
           </div>
         </main>
