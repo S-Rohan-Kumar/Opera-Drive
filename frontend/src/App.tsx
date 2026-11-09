@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth, AuthProvider } from './context/AuthContext.js';
+import { SyncProvider, useSync } from './context/SyncContext.js';
 import { AuthView } from './components/AuthView.js';
 import { Navbar } from './components/Navbar.js';
 import { Sidebar } from './components/Sidebar.js';
@@ -72,6 +73,21 @@ const DriveWorkspace: React.FC = () => {
       fetchContents(currentFolderId);
     }
   }, [user, activeTab, currentFolderId, fetchContents]);
+
+  const { lastEvent } = useSync();
+
+  useEffect(() => {
+    if (!lastEvent) return;
+    if (
+      lastEvent.type === 'FILE_CREATED' ||
+      lastEvent.type === 'VERSION_UPLOADED' ||
+      lastEvent.type === 'RESOURCE_DELETED'
+    ) {
+      if (activeTab === 'my-drive') {
+        fetchContents(currentFolderId);
+      }
+    }
+  }, [lastEvent, activeTab, currentFolderId, fetchContents]);
 
   const handleOpenFolder = (folder: Folder) => {
     setActiveTab('my-drive');
@@ -295,7 +311,9 @@ const DriveWorkspace: React.FC = () => {
 export const App: React.FC = () => {
   return (
     <AuthProvider>
-      <DriveWorkspace />
+      <SyncProvider>
+        <DriveWorkspace />
+      </SyncProvider>
     </AuthProvider>
   );
 };

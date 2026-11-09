@@ -1,20 +1,16 @@
 import { Redis } from "ioredis";
-import type { ConnectionOptions } from "bullmq";
 import { env } from "../config/env.js";
 
-export const redisConnectionOptions: ConnectionOptions = {
+export const redisOptions = {
     host: env.REDIS_HOST,
     port: env.REDIS_PORT,
     password: env.REDIS_PASSWORD || undefined,
     maxRetriesPerRequest: null,
 };
 
-export const redisClient = new Redis({
-    host: env.REDIS_HOST,
-    port: env.REDIS_PORT,
-    password: env.REDIS_PASSWORD || undefined,
-    maxRetriesPerRequest: null,
-});
+export const redisConnectionOptions = redisOptions;
+
+export const redisClient = new Redis(redisOptions);
 
 redisClient.on("error", (err) => {
     console.error("Redis error:", err);

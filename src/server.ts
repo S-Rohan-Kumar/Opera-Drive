@@ -6,6 +6,7 @@ import fastify, {
 import cors from "@fastify/cors";
 import jwt from "@fastify/jwt";
 import multipart from "@fastify/multipart";
+import websocket from '@fastify/websocket';
 import { env } from "./config/env.js";
 import { testDbConnection } from "./db/client.js";
 import { testMinioConnection } from "./storage/minio.js";
@@ -16,6 +17,7 @@ import { resumableRoutes } from "./modules/files/resumable.routes.js";
 import { permissionRoutes } from "./modules/permissions/permission.routes.js";
 import { trashRoutes } from "./modules/trash/trash.routes.js";
 import { searchRoutes } from "./modules/search/search.routes.js";
+import { syncRoutes } from "./modules/sync/sync.routes.js";
 
 export async function buildServer(): Promise<FastifyInstance> {
     const app = fastify({
@@ -61,6 +63,8 @@ export async function buildServer(): Promise<FastifyInstance> {
         credentials: true,
     });
 
+    await app.register(websocket);
+
     await app.register(jwt, {
         secret: env.JWT_SECRET,
     });
@@ -85,6 +89,7 @@ export async function buildServer(): Promise<FastifyInstance> {
     await app.register(permissionRoutes, { prefix: "/api/v1/permissions" });
     await app.register(trashRoutes, { prefix: "/api/v1/trash" });
     await app.register(searchRoutes, { prefix: "/api/v1/search" });
+    await app.register(syncRoutes, { prefix: "/api/v1/sync" });
 
     app.get("/health", async (_req: FastifyRequest, reply: FastifyReply) => {
         const [dbOk, minioOk] = await Promise.all([

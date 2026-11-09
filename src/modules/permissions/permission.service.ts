@@ -1,5 +1,6 @@
 import { query } from "../../db/client.js";
 import { ShareResourceInput } from "./permission.schema.js";
+import { EventBus } from "../sync/event-bus.js";
 
 export class PermissionService {
     static async share(ownerId: string, input: ShareResourceInput) {
@@ -47,6 +48,14 @@ export class PermissionService {
              RETURNING id, resource_type, resource_id, role, created_at`,
             [input.resourceType, input.resourceId, targetUser.id, input.role],
         );
+        await EventBus.publish(targetUser.id, {
+            type: "RESOURCE_SHARED",
+            resourceType: input.resourceType,
+            resourceId: input.resourceId,
+            actorId: ownerId,
+            timestamp: new Date().toISOString(),
+            data: { role: input.role },
+        });
         return {
             ...permRes.rows[0],
             user: targetUser,
@@ -119,6 +128,13 @@ export class PermissionService {
             throw err;
         }
         await query(`DELETE FROM permissions WHERE id = $1`, [permissionId]);
+        await EventBus.publish(perm.user_id, {
+            type: "PERMISSION_REVOKED",
+            resourceType: perm.resource_type,
+            resourceId: perm.resource_id,
+            actorId: ownerId,
+            timestamp: new Date().toISOString(),
+        });
         return { success: true };
     }
     static async getSharedWithMe(userId: string) {

@@ -9,6 +9,7 @@ import {
 } from "../../storage/minio.js";
 import { env } from "../../config/env.js";
 import { PermissionService } from "../permissions/permission.service.js";
+import { EventBus } from "../sync/event-bus.js";
 
 export interface InitiateSessionInput {
     fileName: string;
@@ -25,14 +26,22 @@ export class ResumableService {
         let targetFileId = input.fileId || null;
 
         if (targetFileId) {
-            const fileCheck = await PermissionService.checkFileAccess(userId, targetFileId);
+            const fileCheck = await PermissionService.checkFileAccess(
+                userId,
+                targetFileId,
+            );
             if (fileCheck.role !== "owner" && fileCheck.role !== "editor") {
-                const err: any = new Error("You do not have permission to update this file");
+                const err: any = new Error(
+                    "You do not have permission to update this file",
+                );
                 err.statusCode = 403;
                 err.code = "FORBIDDEN";
                 throw err;
             }
-            const fileRow = await query(`SELECT parent_id FROM files WHERE id = $1`, [targetFileId]);
+            const fileRow = await query(
+                `SELECT parent_id FROM files WHERE id = $1`,
+                [targetFileId],
+            );
             if (fileRow.rows.length > 0) {
                 targetParentId = fileRow.rows[0].parent_id;
             }
@@ -270,18 +279,25 @@ export class ResumableService {
         const client = await getClient();
         try {
             await client.query("BEGIN");
+            let targetOwnerId = userId;
             let fileId: string;
             let versionNumber = 1;
 
             if (session.file_id) {
                 fileId = session.file_id;
+                const fileOwnerRes = await client.query(
+                    `SELECT owner_id FROM files WHERE id = $1`,
+                    [fileId],
+                );
+                if (fileOwnerRes.rows.length > 0) {
+                    targetOwnerId = fileOwnerRes.rows[0].owner_id;
+                }
                 const vRes = await client.query(
                     `SELECT COALESCE(MAX(version_number), 0) + 1 AS next_v FROM file_versions WHERE file_id = $1`,
                     [fileId],
                 );
                 versionNumber = vRes.rows[0].next_v;
             } else {
-                let targetOwnerId = userId;
                 if (session.parent_id) {
                     const folderRes = await client.query(
                         `SELECT owner_id FROM folders WHERE id = $1`,
@@ -342,6 +358,31 @@ export class ResumableService {
                 [sessionId],
             );
             await client.query("COMMIT");
+            const eventType =
+                versionNumber > 1 ? "VERSION_UPLOADED" : "FILE_CREATED";
+            const eventPayload = {
+                type: eventType as any,
+                resourceType: "file" as const,
+                resourceId: fileId,
+                resourceName: session.file_name,
+                parentId: session.parent_id,
+                actorId: userId,
+                timestamp: new Date().toISOString(),
+                data: { versionNumber },
+            };
+
+            await EventBus.publish(targetOwnerId, eventPayload);
+
+            const collaborators = await query<{ user_id: string }>(
+                `SELECT user_id FROM permissions WHERE (resource_type = 'file' AND resource_id = $1)
+                 OR (resource_type = 'folder' AND resource_id = $2)`,
+                [fileId, session.parent_id],
+            );
+            for (const col of collaborators.rows) {
+                if (col.user_id !== targetOwnerId) {
+                    await EventBus.publish(col.user_id, eventPayload);
+                }
+            }
             const partKeys = parts.map((p: any) => p.storage_key);
             try {
                 await minioClient.removeObjects(
